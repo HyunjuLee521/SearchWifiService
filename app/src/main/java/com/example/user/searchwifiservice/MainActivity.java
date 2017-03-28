@@ -8,7 +8,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.user.searchwifiservice.adapters.ListviewAdapter;
-import com.example.user.searchwifiservice.models.PublicWiFiPlaceInfo;
+import com.example.user.searchwifiservice.models.WIfiInfo;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText mSearchEdittext;
     private ListView mListview;
     private ListviewAdapter adapter;
-    private PublicWiFiPlaceInfo mData;
+    private WIfiInfo mData;
 
 
     @Override
@@ -37,38 +37,29 @@ public class MainActivity extends AppCompatActivity {
         // 데이터 파싱하여 넣기
 
 
-
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(WifiInfoApi.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         WifiInfoApi wifiInfoApi = retrofit.create(WifiInfoApi.class);
-        wifiInfoApi.getWifiInfoList("5", "강남구").enqueue(new Callback<PublicWiFiPlaceInfo>() {
+        wifiInfoApi.getWifiInfo("5", "강남구").enqueue(new Callback<WIfiInfo>() {
             @Override
-            public void onResponse(Call<PublicWiFiPlaceInfo> call, Response<PublicWiFiPlaceInfo> response) {
+            public void onResponse(Call<WIfiInfo> call, Response<WIfiInfo> response) {
                 mData = response.body();
+                if (mData != null) {
+                    adapter = new ListviewAdapter(mData.getPublicWiFiPlaceInfo().getRow());
+                    mListview.setAdapter(adapter);
+                } else {
+                    Toast.makeText(MainActivity.this, "들어온 데이터값이 없다 파싱 실패", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
-            public void onFailure(Call<PublicWiFiPlaceInfo> call, Throwable t) {
-
+            public void onFailure(Call<WIfiInfo> call, Throwable t) {
+                Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-
-
-        if (mData == null) {
-            Toast.makeText(this, "들어온 데이터값이 없다 파싱 실패", Toast.LENGTH_SHORT).show();
-
-        } else {
-
-            Toast.makeText(this, mData.getRow().toString() + "", Toast.LENGTH_SHORT).show();
-
-        }
-
-
-//        adapter = new ListviewAdapter(tempData);
-//        mListview.setAdapter(adapter);
 
 
     }

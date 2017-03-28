@@ -63,8 +63,8 @@ public class ListviewAdapter extends BaseAdapter {
 
         // getItem(position).getPLACE_NAME()
 
-        viewHolder.placeNameTextview.setText(1 + "");
-        viewHolder.companyTextview.setText(getItem(position).getINSTL_DIV());
+        viewHolder.placeNameTextview.setText(mData.get(position).getPLACE_NAME());
+        viewHolder.companyTextview.setText(mData.get(position).getINSTL_DIV());
 
         viewHolder.viewLocationImageview.setOnClickListener(new View.OnClickListener() {
             @Override

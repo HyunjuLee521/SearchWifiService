@@ -1,6 +1,6 @@
 package com.example.user.searchwifiservice.models;
 
-import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by USER on 2017-03-27.
@@ -11,7 +11,7 @@ public class PublicWiFiPlaceInfo {
 
     private String list_total_count;
 
-    private List<Row> row;
+    private ArrayList<Row> row;
 
     public RESULT getRESULT() {
         return RESULT;
@@ -29,11 +29,11 @@ public class PublicWiFiPlaceInfo {
         this.list_total_count = list_total_count;
     }
 
-    public List<Row> getRow() {
+    public ArrayList<Row> getRow() {
         return row;
     }
 
-    public void setRow(List<Row> row) {
+    public void setRow(ArrayList<Row> row) {
         this.row = row;
     }
 
