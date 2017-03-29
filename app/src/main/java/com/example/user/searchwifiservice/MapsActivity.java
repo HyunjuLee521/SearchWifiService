@@ -195,10 +195,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     String div = info.getINSTL_DIV();
 
 
-//                    String title = String.format("%s \n (%s)", place, div);
+                    String title = String.format("%s(%s)", place, div);
 //
 //                    // 마커에 추가
-                    makeMarker(y, x, place);
+                    makeMarker(y, x, title);
 
                     Toast.makeText(MapsActivity.this, y + x + place, Toast.LENGTH_SHORT).show();
 
