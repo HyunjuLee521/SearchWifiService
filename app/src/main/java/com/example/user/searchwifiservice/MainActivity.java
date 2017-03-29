@@ -4,10 +4,14 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -16,7 +20,7 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.example.user.searchwifiservice.adapters.ListviewAdapter;
+import com.example.user.searchwifiservice.adapters.SpinnerAdapter;
 import com.example.user.searchwifiservice.models.Info;
 import com.example.user.searchwifiservice.models.Row;
 import com.example.user.searchwifiservice.models.WIfiInfo;
@@ -47,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private ImageView mSearchImageview;
     private EditText mSearchEdittext;
-    private ListviewAdapter adapter;
     private WIfiInfo mData;
 
     private double mLatitude;
@@ -67,12 +70,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private WifiInfoApi wifiInfoApi;
 
     private ArrayList<String> guName;
-    private com.example.user.searchwifiservice.SpinnerAdapter mSpinnerAdapter;
+    private SpinnerAdapter mSpinnerAdapter;
     private WIfiInfo mGuData;
 
 
     private GoogleMap mMap;
     private LatLng myPosition;
+
+    private Handler mHandler;
+    private int totalDataCount;
+    private WifiInfoApi wifiInfoApi4;
 
 
     @Override
@@ -109,10 +116,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         wifiInfoApi2 = retrofit.create(WifiInfoApi.class);
         wifiInfoApi3 = retrofit.create(WifiInfoApi.class);
 
+        wifiInfoApi4 = retrofit.create(WifiInfoApi.class);
+
         mGuSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(MainActivity.this, guName.get(position) + " ", Toast.LENGTH_SHORT).show();
+
 
                 startService(guName.get(position));
             }
@@ -133,18 +142,33 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     .build();
         }
 
-        // GPS 상태 확인
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            // TODO 다이얼로그 띄우기로 수정?
-            Toast.makeText(this, "GPS를 켜주세요", Toast.LENGTH_SHORT).show();
-
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivity(intent);
-        }
-
 
     }
+
+    private void addAllwifiLocation() {
+
+        // TODO 비동기 progress바
+        Toast.makeText(this, "정보를 찾고 있습니다", Toast.LENGTH_SHORT).show();
+
+        for (int i = 1; i < totalDataCount + 1; i++) {
+            Info info = mRealm.where(Info.class).equalTo("id", i).findFirst();
+
+            double x = Double.parseDouble(info.getINSTL_X());
+            double y = Double.parseDouble(info.getINSTL_Y());
+            String place = info.getPLACE_NAME();
+            String div = info.getINSTL_DIV();
+
+            String title = String.format("%s (설치기관:%s)", place, div);
+
+            // 마커에 추가
+            makeMarker(y, x, title);
+        }
+
+        moveMyPosition();
+
+        Toast.makeText(this, "완료하였습니다", Toast.LENGTH_SHORT).show();
+    }
+
 
     private void settingArraylistGuName() {
 
@@ -173,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         guName.add("강남구");
         guName.add("송파구");
         guName.add("강동구");
+//        guName.add("서울시 전체");
     }
 
 
@@ -207,7 +232,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             mLongitude = mLastLocation.getLongitude();
         }
         moveMyPosition();
-        Toast.makeText(this, mLatitude + " " + mLongitude, Toast.LENGTH_SHORT).show();
 
     }
 
@@ -317,6 +341,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             @Override
             public void onResponse(Call<WIfiInfo> call, Response<WIfiInfo> response) {
                 mData = response.body();
+                totalDataCount = Integer.parseInt(mData.getPublicWiFiPlaceInfo().getList_total_count());
 
                 if (mData != null) {
 //                            adapter = new ListviewAdapter(mData.getPublicWiFiPlaceInfo().getRow());
@@ -516,4 +541,34 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_my_position:
+                // GPS 상태 확인
+                LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    // TODO 다이얼로그 띄우기로 수정?
+                    Toast.makeText(this, "GPS를 켜주세요", Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(intent);
+                } else {
+                    moveMyPosition();
+                }
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+
+    }
 }

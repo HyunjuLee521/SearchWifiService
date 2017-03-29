@@ -1,4 +1,4 @@
-package com.example.user.searchwifiservice;
+package com.example.user.searchwifiservice.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +22,7 @@ public class SpinnerAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return 25;
+        return mData.size();
     }
 
     @Override
