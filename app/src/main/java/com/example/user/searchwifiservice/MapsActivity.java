@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 
+import com.example.user.searchwifiservice.models.Info;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -20,6 +21,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import io.realm.Realm;
 
 import static com.example.user.searchwifiservice.R.id.map;
 
@@ -33,9 +36,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
 
+    private Realm mRealm;
+    private LatLng myPosition;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // 렘 초기화
+        mRealm = Realm.getDefaultInstance();
+
+
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -55,12 +66,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // GPS 상태 확인
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            // TODO 다이얼로그 띄우기?
+            // TODO 다이얼로그 띄우기로 수정
             Toast.makeText(this, "GPS를 켜주세요", Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
         }
+
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mRealm.close();
     }
 
     @Override
@@ -100,6 +119,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
+
     }
 
     @Override
@@ -116,6 +137,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Toast.makeText(this, mLatitude + " " + mLongitude, Toast.LENGTH_SHORT).show();
 
 
+        // TODO 오래 걸리는 처리 비동기로?
+        addWifiPositionMarker();
+
+
     }
 
     @Override
@@ -130,10 +155,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void moveMyPosition() {
 
-        LatLng myPosition = new LatLng(mLatitude, mLongitude);
-        mMap.addMarker(new MarkerOptions().position(myPosition).title("Marker in Sydney")
+        myPosition = new LatLng(mLatitude, mLongitude);
+        mMap.addMarker(new MarkerOptions().position(myPosition).title("내 위치")
                 // 마커 색상 커스텀
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+
 
         // 필요 없어
 //        mMap.moveCamera(CameraUpdateFactory
@@ -141,6 +167,46 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myPosition, 17));
 
+    }
+
+    public void makeMarker(double latitude, double longtitude, String title) {
+        LatLng position = new LatLng(latitude, longtitude);
+
+        mMap.addMarker(new MarkerOptions().position(position).title(title)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+
+    }
+
+    public void addWifiPositionMarker() {
+
+        for (int i = 0; i < mRealm.where(Info.class).count(); i++) {
+
+            final int finalI = i;
+            mRealm.executeTransaction(new Realm.Transaction() {
+                @Override
+                public void execute(Realm realm) {
+
+
+                    Info info = mRealm.where(Info.class).equalTo("id", finalI + 1).findFirst();
+//
+                    double x = Double.parseDouble(info.getINSTL_X());
+                    double y = Double.parseDouble(info.getINSTL_Y());
+                    String place = info.getPLACE_NAME();
+                    String div = info.getINSTL_DIV();
+
+
+//                    String title = String.format("%s \n (%s)", place, div);
+//
+//                    // 마커에 추가
+                    makeMarker(y, x, place);
+
+                    Toast.makeText(MapsActivity.this, y + x + place, Toast.LENGTH_SHORT).show();
+
+                }
+            });
+
+
+        }
 
 
     }

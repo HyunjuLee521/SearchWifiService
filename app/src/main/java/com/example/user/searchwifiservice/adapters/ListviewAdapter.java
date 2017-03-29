@@ -1,5 +1,6 @@
 package com.example.user.searchwifiservice.adapters;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.user.searchwifiservice.MapsActivity;
 import com.example.user.searchwifiservice.R;
 import com.example.user.searchwifiservice.models.Row;
 
@@ -65,13 +67,23 @@ public class ListviewAdapter extends BaseAdapter {
 
         viewHolder.placeNameTextview.setText(mData.get(position).getPLACE_NAME());
         viewHolder.companyTextview.setText(mData.get(position).getINSTL_DIV());
-
         viewHolder.viewLocationImageview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(parent.getContext(), "지도 띄울것이다", Toast.LENGTH_SHORT).show();
+
+
+                // TODO 지도 띄우면서 해당 아이템의 정보 실어 보내기
+                /**
+                 * 지도 띄우기
+                 * {@link com.example.user.searchwifiservice.MapsActivity}
+                 */
+                Intent intent = new Intent(parent.getContext(), MapsActivity.class);
+                parent.getContext().startActivity(intent);
+
             }
         });
+
 
         return convertView;
     }

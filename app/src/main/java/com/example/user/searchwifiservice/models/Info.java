@@ -1,21 +1,27 @@
 package com.example.user.searchwifiservice.models;
 
+import io.realm.RealmObject;
+
 /**
- * Created by USER on 2017-03-27.
+ * Created by USER on 2017-03-29.
  */
 
-public class Row{
-    private String PLACE_NAME;
+public class Info extends RealmObject {
 
-    private String CATEGORY;
+    String PLACE_NAME;
 
-    private String INSTL_X;
+    String CATEGORY;
 
-    private String INSTL_Y;
+    String INSTL_X;
 
-    private String GU_NM;
+    String INSTL_Y;
 
-    private String INSTL_DIV;
+    String GU_NM;
+
+    String INSTL_DIV;
+
+    int id;
+
 
     public String getPLACE_NAME() {
         return PLACE_NAME;
@@ -65,9 +71,25 @@ public class Row{
         this.INSTL_DIV = INSTL_DIV;
     }
 
-    @Override
-    public String toString() {
-        return "ClassPojo [PLACE_NAME = " + PLACE_NAME + ", CATEGORY = " + CATEGORY + ", INSTL_X = " + INSTL_X + ", INSTL_Y = " + INSTL_Y + ", GU_NM = " + GU_NM + ", INSTL_DIV = " + INSTL_DIV + "]";
+    public int getId() {
+        return id;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Info{" +
+                "PLACE_NAME='" + PLACE_NAME + '\'' +
+                ", CATEGORY='" + CATEGORY + '\'' +
+                ", INSTL_X='" + INSTL_X + '\'' +
+                ", INSTL_Y='" + INSTL_Y + '\'' +
+                ", GU_NM='" + GU_NM + '\'' +
+                ", INSTL_DIV='" + INSTL_DIV + '\'' +
+                ", id=" + id +
+                '}';
+    }
 }
