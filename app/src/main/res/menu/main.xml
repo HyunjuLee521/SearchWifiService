@@ -4,7 +4,10 @@
 
     <item
         android:id="@+id/action_my_position"
-        android:title="내 위치"
+        android:icon="@drawable/gps_white"
+        android:title="내위치"
         app:showAsAction="always">
+
+
     </item>
 </menu>

@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">SearchWifiService</string>
+    <string name="app_name">서울시 무료 와이파이 지도</string>
     <string name="title_activity_maps">Map</string>
 </resources>

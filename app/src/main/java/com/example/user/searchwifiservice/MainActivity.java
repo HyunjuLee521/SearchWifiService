@@ -9,6 +9,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -18,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.user.searchwifiservice.adapters.SpinnerAdapter;
@@ -45,6 +47,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import static com.example.user.searchwifiservice.R.id.map;
+import static com.example.user.searchwifiservice.TypefaceManager.mKopubDotumLightTypeface;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback {
@@ -80,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private Handler mHandler;
     private int totalDataCount;
     private WifiInfoApi wifiInfoApi4;
+    private Toolbar mMainToolbar;
+    private TextView mTitleTextview;
 
 
     @Override
@@ -103,6 +108,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         settingArraylistGuName();
         mSpinnerAdapter = new SpinnerAdapter(guName);
         mGuSpinner.setAdapter(mSpinnerAdapter);
+
+        // 툴바연결
+
+        // 툴바 연결
+        mMainToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(mMainToolbar);
+        getSupportActionBar().setTitle("");
+
+        // TODO 툴바 제목, 부제목 연결 및 글씨체 설정
+        mTitleTextview = (TextView) mMainToolbar.findViewById(R.id.title_textview);
+
+        // TODO 오류 발생
+        mTitleTextview.setTypeface(mKopubDotumLightTypeface);
+        mTitleTextview.setText("서울시 무료 와이파이");
 
 
         // WIfiInfo 데이터 파싱하여 넣기
@@ -292,7 +311,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         LatLng position = new LatLng(latitude, longtitude);
 
         mMap.addMarker(new MarkerOptions().position(position).title(title)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+
 
     }
 
@@ -322,7 +342,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         // 0번째 index에 들어있는 장소로 이동
         LatLng firstPosition = new LatLng(Double.parseDouble(rowArrayList.get(0).getINSTL_Y())
                 , Double.parseDouble(rowArrayList.get(0).getINSTL_X()));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(firstPosition, 14));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(firstPosition, 17));
 
     }
 
