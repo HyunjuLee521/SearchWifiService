@@ -1,7 +1,9 @@
-package com.example.user.searchwifiservice;
+package com.hj.user.searchwifiservice;
 
 import android.app.Application;
 import android.graphics.Typeface;
+
+import com.hj.user.searchwifiservice.TypefaceManager;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;

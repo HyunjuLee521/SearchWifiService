@@ -1,4 +1,4 @@
-package com.example.user.searchwifiservice.models;
+package com.hj.user.searchwifiservice.models;
 
 import io.realm.RealmObject;
 

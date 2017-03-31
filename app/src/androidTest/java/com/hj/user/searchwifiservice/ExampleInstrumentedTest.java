@@ -1,4 +1,4 @@
-package com.example.user.searchwifiservice;
+package com.hj.user.searchwifiservice;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

@@ -1,4 +1,4 @@
-package com.example.user.searchwifiservice.models;
+package com.hj.user.searchwifiservice.models;
 
 /**
  * Created by USER on 2017-03-27.

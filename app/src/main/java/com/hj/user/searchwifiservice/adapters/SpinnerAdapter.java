@@ -1,4 +1,4 @@
-package com.example.user.searchwifiservice.adapters;
+package com.hj.user.searchwifiservice.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;

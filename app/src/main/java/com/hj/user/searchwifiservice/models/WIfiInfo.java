@@ -1,4 +1,4 @@
-package com.example.user.searchwifiservice.models;
+package com.hj.user.searchwifiservice.models;
 
 /**
  * Created by USER on 2017-03-28.
@@ -7,11 +7,11 @@ package com.example.user.searchwifiservice.models;
 public class WIfiInfo {
     private PublicWiFiPlaceInfo PublicWiFiPlaceInfo;
 
-    public com.example.user.searchwifiservice.models.PublicWiFiPlaceInfo getPublicWiFiPlaceInfo() {
+    public com.hj.user.searchwifiservice.models.PublicWiFiPlaceInfo getPublicWiFiPlaceInfo() {
         return PublicWiFiPlaceInfo;
     }
 
-    public void setPublicWiFiPlaceInfo(com.example.user.searchwifiservice.models.PublicWiFiPlaceInfo publicWiFiPlaceInfo) {
+    public void setPublicWiFiPlaceInfo(com.hj.user.searchwifiservice.models.PublicWiFiPlaceInfo publicWiFiPlaceInfo) {
         PublicWiFiPlaceInfo = publicWiFiPlaceInfo;
     }
 

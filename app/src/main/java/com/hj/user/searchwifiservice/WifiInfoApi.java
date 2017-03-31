@@ -1,6 +1,6 @@
-package com.example.user.searchwifiservice;
+package com.hj.user.searchwifiservice;
 
-import com.example.user.searchwifiservice.models.WIfiInfo;
+import com.hj.user.searchwifiservice.models.WIfiInfo;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

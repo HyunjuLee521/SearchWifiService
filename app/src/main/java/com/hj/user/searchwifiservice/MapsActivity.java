@@ -1,4 +1,4 @@
-package com.example.user.searchwifiservice;
+package com.hj.user.searchwifiservice;
 
 import android.content.Intent;
 import android.location.Location;
@@ -10,7 +10,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 
-import com.example.user.searchwifiservice.models.Info;
+import com.hj.user.searchwifiservice.R;
+import com.hj.user.searchwifiservice.models.Info;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -24,7 +25,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import io.realm.Realm;
 
-import static com.example.user.searchwifiservice.R.id.map;
+import static com.hj.user.searchwifiservice.R.id.map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {

@@ -1,4 +1,4 @@
-package com.example.user.searchwifiservice;
+package com.hj.user.searchwifiservice;
 
 import android.content.Intent;
 import android.location.Location;
@@ -22,10 +22,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.user.searchwifiservice.adapters.SpinnerAdapter;
-import com.example.user.searchwifiservice.models.Info;
-import com.example.user.searchwifiservice.models.Row;
-import com.example.user.searchwifiservice.models.WIfiInfo;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -36,6 +32,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.hj.user.searchwifiservice.adapters.SpinnerAdapter;
+import com.hj.user.searchwifiservice.models.Info;
+import com.hj.user.searchwifiservice.models.Row;
+import com.hj.user.searchwifiservice.models.WIfiInfo;
 
 import java.util.ArrayList;
 
@@ -46,8 +46,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-import static com.example.user.searchwifiservice.R.id.map;
-import static com.example.user.searchwifiservice.TypefaceManager.mKopubDotumLightTypeface;
+import static com.hj.user.searchwifiservice.R.id.map;
+import static com.hj.user.searchwifiservice.TypefaceManager.mKopubDotumLightTypeface;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback {
@@ -86,11 +86,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private Toolbar mMainToolbar;
     private TextView mTitleTextview;
 
+    private boolean isFIrstAcess;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        moveMyPosition(); 에 접근하는 것 처음인지 아닌지
+        isFIrstAcess = true;
 
         // 구글 맵 가져오기
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -121,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         // TODO 오류 발생
         mTitleTextview.setTypeface(mKopubDotumLightTypeface);
-        mTitleTextview.setText("서울시 무료 와이파이");
+        mTitleTextview.setText("서울시 무료 와이파이 지도");
 
 
         // WIfiInfo 데이터 파싱하여 넣기
@@ -255,17 +260,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     public void moveMyPosition() {
-
-        myPosition = new LatLng(mLatitude, mLongitude);
-        mMap.addMarker(new MarkerOptions().position(myPosition).title("내 위치")
-                // 마커 색상 커스텀
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+        // 첫 접근이라면 현재 내 위치에 마커를 추가한다
+        if (isFIrstAcess) {
+            myPosition = new LatLng(mLatitude, mLongitude);
+            mMap.addMarker(new MarkerOptions().position(myPosition).title("내 위치")
+                    // 마커 색상 커스텀
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+        }
 
         // 필요 없어
 //        mMap.moveCamera(CameraUpdateFactory
 //                .newLatLng(myPosition));
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myPosition, 17));
+        isFIrstAcess = false;
 
     }
 
