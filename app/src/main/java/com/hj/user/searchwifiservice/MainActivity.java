@@ -24,6 +24,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -31,6 +33,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.hj.user.searchwifiservice.adapters.SpinnerAdapter;
 import com.hj.user.searchwifiservice.models.Info;
@@ -50,7 +53,11 @@ import static com.hj.user.searchwifiservice.R.id.map;
 import static com.hj.user.searchwifiservice.TypefaceManager.mKopubDotumLightTypeface;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback {
+        GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback, LocationListener {
+
+
+    // LocationListener
+    private LocationRequest mLocationRequest;
 
     private ImageView mSearchImageview;
     private EditText mSearchEdittext;
@@ -78,15 +85,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     private GoogleMap mMap;
-    private LatLng myPosition;
 
     private Handler mHandler;
     private int totalDataCount;
     private WifiInfoApi wifiInfoApi4;
     private Toolbar mMainToolbar;
     private TextView mTitleTextview;
-
-    private boolean isFIrstAcess;
+    private LocationManager mLocationManager;
+    private LatLng myLastPosition;
+    private Marker myPositionMarker;
 
 
     @Override
@@ -95,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         setContentView(R.layout.activity_main);
 
 //        moveMyPosition(); 에 접근하는 것 처음인지 아닌지
-        isFIrstAcess = true;
+
 
         // 구글 맵 가져오기
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -167,30 +174,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
 
 
-    }
 
-    private void addAllwifiLocation() {
+        // TODO 좀 더 자주 갱신하면 더 정확한 최근 위치 파악 가능?
+        // Create the LocationRequest object
+        mLocationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(10 * 1000)        // 10 seconds, in milliseconds
+                .setFastestInterval(1 * 1000); // 1 second, in milliseconds
 
-        // TODO 비동기 progress바
-        Toast.makeText(this, "정보를 찾고 있습니다", Toast.LENGTH_SHORT).show();
 
-        for (int i = 1; i < totalDataCount + 1; i++) {
-            Info info = mRealm.where(Info.class).equalTo("id", i).findFirst();
 
-            double x = Double.parseDouble(info.getINSTL_X());
-            double y = Double.parseDouble(info.getINSTL_Y());
-            String place = info.getPLACE_NAME();
-            String div = info.getINSTL_DIV();
 
-            String title = String.format("%s (설치기관:%s)", place, div);
 
-            // 마커에 추가
-            makeMarker(y, x, title);
-        }
 
-        moveMyPosition();
-
-        Toast.makeText(this, "완료하였습니다", Toast.LENGTH_SHORT).show();
     }
 
 
@@ -245,35 +241,75 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        // 현재 위치
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                mGoogleApiClient);
-
-
-        if (mLastLocation != null) {
-            mLatitude = mLastLocation.getLatitude();
-            mLongitude = mLastLocation.getLongitude();
+    protected void onPause() {
+        super.onPause();
+        if (mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
         }
-        moveMyPosition();
-
     }
 
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+//        // 현재 위치 가져오기
+//        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+//                mGoogleApiClient);
+//
+//        if (mLastLocation != null) {
+//            mLatitude = mLastLocation.getLatitude();
+//            mLongitude = mLastLocation.getLongitude();
+//        }
+//
+//        myPositionMarker = new LatLng(mLatitude, mLongitude);
+        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (location == null) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        }
+        else {
+            // 잘 들어감
+            updateMyLastPosition(location);
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        updateMyLastPosition(location);
+    }
+
+    private void updateMyLastPosition(Location location) {
+        double currentLatitude = location.getLatitude();
+        double currentLongitude = location.getLongitude();
+        myLastPosition = new LatLng(currentLatitude, currentLongitude);
+
+//        MarkerOptions options = new MarkerOptions()
+//                .position(myLastPosition)
+//                .title("I am here!");
+//
+//        mMap.addMarker(options);
+//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLastPosition, 17));
+    }
+
+
     public void moveMyPosition() {
-        // 첫 접근이라면 현재 내 위치에 마커를 추가한다
-        if (isFIrstAcess) {
-            myPosition = new LatLng(mLatitude, mLongitude);
-            mMap.addMarker(new MarkerOptions().position(myPosition).title("내 위치")
-                    // 마커 색상 커스텀
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+
+        if (myPositionMarker != null) {
+            myPositionMarker.remove();
         }
 
-        // 필요 없어
-//        mMap.moveCamera(CameraUpdateFactory
-//                .newLatLng(myPosition));
+        // TODO 연결될 때의 위치가 아닌 실시간 현재 위치 가져오기
+        // 현재 위치로 마커 추가하기
+        myPositionMarker = mMap.addMarker(new MarkerOptions().position(myLastPosition).title("내 위치")
+                // 마커 색상 커스텀
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myPosition, 17));
-        isFIrstAcess = false;
+
+
+//         필요 없어
+//        mMap.moveCamera(CameraUpdateFactory
+//                .newLatLng(myPositionMarker));
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLastPosition, 17));
+
 
     }
 
@@ -599,4 +635,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     }
+
+
+
 }
