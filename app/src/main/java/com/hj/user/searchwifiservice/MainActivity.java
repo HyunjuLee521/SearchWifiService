@@ -4,12 +4,12 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -36,7 +36,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.hj.user.searchwifiservice.adapters.SpinnerAdapter;
-import com.hj.user.searchwifiservice.models.Info;
 import com.hj.user.searchwifiservice.models.Row;
 import com.hj.user.searchwifiservice.models.WIfiInfo;
 
@@ -63,11 +62,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private EditText mSearchEdittext;
     private WIfiInfo mData;
 
-    private double mLatitude;
-    private double mLongitude;
     private GoogleApiClient mGoogleApiClient;
-    // 현재 위치
-    private Location mLastLocation;
 
     private Realm mRealm;
     private Button mUpdateButton;
@@ -86,14 +81,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private GoogleMap mMap;
 
-    private Handler mHandler;
-    private int totalDataCount;
     private WifiInfoApi wifiInfoApi4;
     private Toolbar mMainToolbar;
     private TextView mTitleTextview;
-    private LocationManager mLocationManager;
-    private LatLng myLastPosition;
     private Marker myPositionMarker;
+
+    private Boolean mMyPositionIsClicked;
 
 
     @Override
@@ -174,21 +167,33 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
 
 
-
-        // TODO 좀 더 자주 갱신하면 더 정확한 최근 위치 파악 가능?
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(10 * 1000)        // 10 seconds, in milliseconds
                 .setFastestInterval(1 * 1000); // 1 second, in milliseconds
 
-
-
-
-
-
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean("mMyPositionIsClicked", mMyPositionIsClicked);
+        super.onSaveInstanceState(outState);
+//        Toast.makeText(this, "onSaveInstanceState 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+    }
+
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        // 복원 (null 체크 불필요)
+        mMyPositionIsClicked = savedInstanceState.getBoolean("mMyPositionIsClicked");
+        Toast.makeText(this, "onRestoreInstanceState 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+
+        Log.d("MainActivity", "onRestoreInstanceState: ");
+
+    }
 
     private void settingArraylistGuName() {
 
@@ -251,46 +256,43 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-//        // 현재 위치 가져오기
-//        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-//                mGoogleApiClient);
-//
-//        if (mLastLocation != null) {
-//            mLatitude = mLastLocation.getLatitude();
-//            mLongitude = mLastLocation.getLongitude();
-//        }
-//
-//        myPositionMarker = new LatLng(mLatitude, mLongitude);
-        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (location == null) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        }
-        else {
-            // 잘 들어감
-            updateMyLastPosition(location);
-        }
+        Log.d("MainActivity", "onConnected: ");
+
+
+        
+
     }
 
+    // TODO 갱신 안됨
     @Override
     public void onLocationChanged(Location location) {
-        updateMyLastPosition(location);
-    }
+        Log.d("MainActivity", "onLocationChanged: " + location.toString());
 
-    private void updateMyLastPosition(Location location) {
-        double currentLatitude = location.getLatitude();
-        double currentLongitude = location.getLongitude();
-        myLastPosition = new LatLng(currentLatitude, currentLongitude);
-
-//        MarkerOptions options = new MarkerOptions()
-//                .position(myLastPosition)
-//                .title("I am here!");
-//
-//        mMap.addMarker(options);
-//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLastPosition, 17));
+        if (mMyPositionIsClicked) {
+            Toast.makeText(this, "onConnected 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+            moveMyPosition();
+        }
     }
 
 
     public void moveMyPosition() {
+        mMyPositionIsClicked = true;
+
+        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        LatLng newLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+        Toast.makeText(this, "moveMyPosition 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+
+        // GPS 상태 확인
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            // TODO 다이얼로그 띄우기로 수정?
+            Toast.makeText(this, "GPS를 켜주세요", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        }
+
 
         if (myPositionMarker != null) {
             myPositionMarker.remove();
@@ -298,18 +300,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         // TODO 연결될 때의 위치가 아닌 실시간 현재 위치 가져오기
         // 현재 위치로 마커 추가하기
-        myPositionMarker = mMap.addMarker(new MarkerOptions().position(myLastPosition).title("내 위치")
+        myPositionMarker = mMap.addMarker(new MarkerOptions().position(newLatLng).title("내 위치")
                 // 마커 색상 커스텀
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
-
 
 
 //         필요 없어
 //        mMap.moveCamera(CameraUpdateFactory
 //                .newLatLng(myPositionMarker));
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLastPosition, 17));
-
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newLatLng, 17));
 
     }
 
@@ -330,6 +330,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     public void startService(String gu) {
+        mMyPositionIsClicked = false;
+        Toast.makeText(this, "startService 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+
         wifiInfoApi.getWifiInfo("1", "1000", gu).enqueue(new Callback<WIfiInfo>() {
             @Override
             public void onResponse(Call<WIfiInfo> call, Response<WIfiInfo> response) {
@@ -391,220 +394,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
 
-    public void updateTotalInfoToRealm() {
-        mRealm.executeTransaction(new Realm.Transaction() {
-            @Override
-            public void execute(Realm realm) {
-                mRealm.where(Info.class).findAll().deleteAllFromRealm();
-            }
-        });
-
-
-        // 1 ~ 1000
-        wifiInfoApi1.getWifiInfo("1", "1000", "").enqueue(new Callback<WIfiInfo>() {
-            @Override
-            public void onResponse(Call<WIfiInfo> call, Response<WIfiInfo> response) {
-                mData = response.body();
-                totalDataCount = Integer.parseInt(mData.getPublicWiFiPlaceInfo().getList_total_count());
-
-                if (mData != null) {
-//                            adapter = new ListviewAdapter(mData.getPublicWiFiPlaceInfo().getRow());
-//                            mListview.setAdapter(adapter);
-
-                    for (int i = 0; i < 1000; i++) {
-                        Row iData = mData.getPublicWiFiPlaceInfo().getRow().get(i);
-
-                        final String PLACE_NAME = iData.getPLACE_NAME();
-                        final String CATEGORY = iData.getCATEGORY();
-                        final String GU_NM = iData.getGU_NM();
-                        final String INSTL_DIV = iData.getINSTL_DIV();
-                        final String INSTL_X = iData.getINSTL_X();
-                        final String INSTL_Y = iData.getINSTL_Y();
-
-
-                        mRealm.executeTransaction(new Realm.Transaction() {
-                            @Override
-                            public void execute(Realm realm) {
-
-                                Info info = mRealm.createObject(Info.class);
-
-                                info.setCATEGORY(CATEGORY);
-                                info.setGU_NM(GU_NM);
-                                info.setINSTL_DIV(INSTL_DIV);
-                                info.setINSTL_X(INSTL_X);
-                                info.setINSTL_Y(INSTL_Y);
-                                info.setPLACE_NAME(PLACE_NAME);
-
-                                // TODO id값 부여
-                                Number currentIdNum = mRealm.where(Info.class).max("id");
-                                int nextId;
-                                if (currentIdNum == null) {
-                                    nextId = 1;
-                                } else {
-                                    nextId = currentIdNum.intValue() + 1;
-                                }
-                                info.setId(nextId);
-                                mRealm.insertOrUpdate(info); // using insert API
-
-
-                            }
-                        });
-
-                    }
-
-                    Toast.makeText(MainActivity.this, "저장된 데이터 갯수 : " + mRealm.where(Info.class).count(), Toast.LENGTH_SHORT).show();
-
-
-                } else {
-                    Toast.makeText(MainActivity.this, "들어온 데이터값이 없다 파싱 실패", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<WIfiInfo> call, Throwable t) {
-                Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-        // 1001 ~ 2000
-        wifiInfoApi2.getWifiInfo("1001", "2000", "").enqueue(new Callback<WIfiInfo>() {
-            @Override
-            public void onResponse(Call<WIfiInfo> call, Response<WIfiInfo> response) {
-                mData = response.body();
-
-                if (mData != null) {
-//                            adapter = new ListviewAdapter(mData.getPublicWiFiPlaceInfo().getRow());
-//                            mListview.setAdapter(adapter);
-
-                    for (int i = 0; i < 1000; i++) {
-                        Row iData = mData.getPublicWiFiPlaceInfo().getRow().get(i);
-
-                        final String PLACE_NAME = iData.getPLACE_NAME();
-                        final String CATEGORY = iData.getCATEGORY();
-                        final String GU_NM = iData.getGU_NM();
-                        final String INSTL_DIV = iData.getINSTL_DIV();
-                        final String INSTL_X = iData.getINSTL_X();
-                        final String INSTL_Y = iData.getINSTL_Y();
-
-
-                        mRealm.executeTransaction(new Realm.Transaction() {
-                            @Override
-                            public void execute(Realm realm) {
-
-                                Info info = mRealm.createObject(Info.class);
-
-                                info.setCATEGORY(CATEGORY);
-                                info.setGU_NM(GU_NM);
-                                info.setINSTL_DIV(INSTL_DIV);
-                                info.setINSTL_X(INSTL_X);
-                                info.setINSTL_Y(INSTL_Y);
-                                info.setPLACE_NAME(PLACE_NAME);
-
-                                // TODO id값 부여
-                                Number currentIdNum = mRealm.where(Info.class).max("id");
-                                int nextId;
-                                if (currentIdNum == null) {
-                                    nextId = 1;
-                                } else {
-                                    nextId = currentIdNum.intValue() + 1;
-                                }
-                                info.setId(nextId);
-                                mRealm.insertOrUpdate(info); // using insert API
-
-
-                            }
-                        });
-
-                    }
-
-                    Toast.makeText(MainActivity.this, "저장된 데이터 갯수 : " + mRealm.where(Info.class).count(), Toast.LENGTH_SHORT).show();
-
-
-                } else {
-                    Toast.makeText(MainActivity.this, "들어온 데이터값이 없다 파싱 실패", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<WIfiInfo> call, Throwable t) {
-                Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-        // 2001~2994
-        wifiInfoApi3.getWifiInfo("2001", "3000", "").enqueue(new Callback<WIfiInfo>() {
-            @Override
-            public void onResponse(Call<WIfiInfo> call, Response<WIfiInfo> response) {
-                mData = response.body();
-                int maxPage = Integer.parseInt(mData.getPublicWiFiPlaceInfo().getList_total_count());
-
-                if (mData != null) {
-//                            adapter = new ListviewAdapter(mData.getPublicWiFiPlaceInfo().getRow());
-//                            mListview.setAdapter(adapter);
-
-                    for (int i = 0; i < maxPage - 2000; i++) {
-                        Row iData = mData.getPublicWiFiPlaceInfo().getRow().get(i);
-
-                        final String PLACE_NAME = iData.getPLACE_NAME();
-                        final String CATEGORY = iData.getCATEGORY();
-                        final String GU_NM = iData.getGU_NM();
-                        final String INSTL_DIV = iData.getINSTL_DIV();
-                        final String INSTL_X = iData.getINSTL_X();
-                        final String INSTL_Y = iData.getINSTL_Y();
-
-
-                        mRealm.executeTransaction(new Realm.Transaction() {
-                            @Override
-                            public void execute(Realm realm) {
-
-                                Info info = mRealm.createObject(Info.class);
-
-                                info.setCATEGORY(CATEGORY);
-                                info.setGU_NM(GU_NM);
-                                info.setINSTL_DIV(INSTL_DIV);
-                                info.setINSTL_X(INSTL_X);
-                                info.setINSTL_Y(INSTL_Y);
-                                info.setPLACE_NAME(PLACE_NAME);
-
-                                // TODO id값 부여
-                                Number currentIdNum = mRealm.where(Info.class).max("id");
-                                int nextId;
-                                if (currentIdNum == null) {
-                                    nextId = 1;
-                                } else {
-                                    nextId = currentIdNum.intValue() + 1;
-                                }
-                                info.setId(nextId);
-                                mRealm.insertOrUpdate(info); // using insert API
-
-
-                            }
-                        });
-
-                    }
-
-                    Toast.makeText(MainActivity.this, "저장된 데이터 갯수 : " + mRealm.where(Info.class).count(), Toast.LENGTH_SHORT).show();
-
-
-                } else {
-                    Toast.makeText(MainActivity.this, "들어온 데이터값이 없다 파싱 실패", Toast.LENGTH_SHORT).show();
-                }
-
-
-            }
-
-            @Override
-            public void onFailure(Call<WIfiInfo> call, Throwable t) {
-                Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-    }
-
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -616,17 +405,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_my_position:
-                // GPS 상태 확인
-                LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    // TODO 다이얼로그 띄우기로 수정?
-                    Toast.makeText(this, "GPS를 켜주세요", Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    startActivity(intent);
-                } else {
-                    moveMyPosition();
-                }
+                moveMyPosition();
                 return true;
 
             default:
@@ -636,6 +415,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     }
 
-
-
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        moveMyPosition();
+    }
 }
