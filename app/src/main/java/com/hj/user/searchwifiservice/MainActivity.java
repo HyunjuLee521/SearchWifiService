@@ -9,7 +9,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -55,8 +54,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback, LocationListener {
 
 
+    public static final int GPS_REQUEST_CODE = 1000;
     // LocationListener
-    private LocationRequest mLocationRequest;
 
     private ImageView mSearchImageview;
     private EditText mSearchEdittext;
@@ -86,7 +85,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private TextView mTitleTextview;
     private Marker myPositionMarker;
 
-    private Boolean mMyPositionIsClicked;
+    private boolean mMyPositionIsClicked;
+    private boolean gpsOn;
+    private LocationRequest mLocationRequest;
+    private Location mMyLastlocation;
 
 
     @Override
@@ -145,9 +147,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mGuSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-
-                startService(guName.get(position));
+                if (!guName.get(position).equals("-구")) {
+                    startService(guName.get(position));
+                }
             }
 
             @Override
@@ -166,20 +168,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     .build();
         }
 
-
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(10 * 1000)        // 10 seconds, in milliseconds
                 .setFastestInterval(1 * 1000); // 1 second, in milliseconds
 
+
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean("mMyPositionIsClicked", mMyPositionIsClicked);
         super.onSaveInstanceState(outState);
 //        Toast.makeText(this, "onSaveInstanceState 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+        outState.putBoolean("mMyPositionIsClicked", mMyPositionIsClicked);
     }
 
 
@@ -189,14 +191,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         // 복원 (null 체크 불필요)
         mMyPositionIsClicked = savedInstanceState.getBoolean("mMyPositionIsClicked");
-        Toast.makeText(this, "onRestoreInstanceState 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "onRestoreInstanceState 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
 
-        Log.d("MainActivity", "onRestoreInstanceState: ");
+//        Log.d("MainActivity", "onRestoreInstanceState: ");
 
     }
 
     private void settingArraylistGuName() {
-
+        guName.add("-구");
         guName.add("종로구");
         guName.add("중구");
         guName.add("용산구");
@@ -234,69 +236,106 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         mGoogleApiClient.connect();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mGoogleApiClient.disconnect();
+//        Log.d("MainActivity", "onResume: ");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+//        Log.d("MainActivity", "onPause: ");
         if (mGoogleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
             mGoogleApiClient.disconnect();
         }
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Log.d("MainActivity", "onConnected: ");
+//        Log.d("MainActivity", "onConnected: ");
+
+        mMyLastlocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+        if (mMyLastlocation == null) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        }
 
 
-        
+        if (mMyPositionIsClicked) {
+            mGuSpinner.setSelection(0);
+            if (!gpsIsOn()) {
+                Toast.makeText(this, "gps를 켜주세요", Toast.LENGTH_SHORT).show();
+                startGps();
+            } else {
+//                Toast.makeText(this, "moveMyPosition 작동", Toast.LENGTH_SHORT).show();
+                moveMyPosition();
+            }
+        }
+
 
     }
 
+
+    // TODO
+    /*
+      if (mMyPositionIsClicked) {
+            moveMyPosition();
+        }
+     */
     // TODO 갱신 안됨
     @Override
     public void onLocationChanged(Location location) {
-        Log.d("MainActivity", "onLocationChanged: " + location.toString());
+//        Log.d("MainActivity", "onLocationChanged: ");
+//        Toast.makeText(this, "onLocationChanged 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
 
-        if (mMyPositionIsClicked) {
-            Toast.makeText(this, "onConnected 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
-            moveMyPosition();
-        }
+
+        mMyLastlocation = location;
+
+//        if (mMyPositionIsClicked) {
+//            mGuSpinner.setSelection(0);
+//            if (!gpsIsOn()) {
+//                Toast.makeText(this, "gps를 켜주세요", Toast.LENGTH_SHORT).show();
+//                startGps();
+//            } else {
+//                Toast.makeText(this, "moveMyPosition 작동", Toast.LENGTH_SHORT).show();
+//                moveMyPosition();
+//            }
+//        }
+
     }
 
 
     public void moveMyPosition() {
         mMyPositionIsClicked = true;
 
-        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        LatLng newLatLng = new LatLng(location.getLatitude(), location.getLongitude());
 
-        Toast.makeText(this, "moveMyPosition 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+        // TODO
 
-        // GPS 상태 확인
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            // TODO 다이얼로그 띄우기로 수정?
-            Toast.makeText(this, "GPS를 켜주세요", Toast.LENGTH_SHORT).show();
 
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivity(intent);
+
+
+
+
+//        mMyLastlocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+        if (mMyLastlocation == null) {
+//            Toast.makeText(this, "mMyLastlocation == null", Toast.LENGTH_SHORT).show();
+            return;
         }
 
+
+        LatLng newLatLng = new LatLng(mMyLastlocation.getLatitude(), mMyLastlocation.getLongitude());
+
+//        Toast.makeText(this, "moveMyPosition 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+
+//        Log.d("MainActivity", mMyLastlocation.toString() + "");
 
         if (myPositionMarker != null) {
             myPositionMarker.remove();
         }
+        // 37.274181,127.022672
+
 
         // TODO 연결될 때의 위치가 아닌 실시간 현재 위치 가져오기
         // 현재 위치로 마커 추가하기
@@ -331,7 +370,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     public void startService(String gu) {
         mMyPositionIsClicked = false;
-        Toast.makeText(this, "startService 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "startService 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
 
         wifiInfoApi.getWifiInfo("1", "1000", gu).enqueue(new Callback<WIfiInfo>() {
             @Override
@@ -382,7 +421,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 //
 //                    // 마커에 추가
             makeMarker(y, x, title);
-
         }
 
 
@@ -405,19 +443,50 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_my_position:
-                moveMyPosition();
+                mGuSpinner.setSelection(0);
+                if (!gpsIsOn()) {
+                    Toast.makeText(this, "gps를 켜주세요", Toast.LENGTH_SHORT).show();
+                    startGps();
+                } else {
+                    moveMyPosition();
+                }
+
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
         }
 
-
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        moveMyPosition();
+        if (requestCode == GPS_REQUEST_CODE) {
+            if (gpsIsOn()) {
+                moveMyPosition();
+            } else {
+                Toast.makeText(this, "gps를 켜야 현재 위치를 확인할 수 있습니다", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
+
+    private boolean gpsIsOn() {
+        // GPS 상태 확인
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void startGps() {
+        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        startActivityForResult(intent, GPS_REQUEST_CODE);
+
+    }
+
+
 }
