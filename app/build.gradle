@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "com.hj.user.searchwifiservice"
         minSdkVersion 22
-        targetSdkVersion 22
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -32,5 +32,6 @@ dependencies {
     compile 'com.squareup.retrofit2:converter-gson:2.2.0'
     compile 'com.google.android.gms:play-services-maps:10.2.1'
     compile 'com.google.android.gms:play-services-location:10.2.1'
+    compile 'gun0912.ted:tedpermission:1.0.3'
     testCompile 'junit:junit:4.12'
 }

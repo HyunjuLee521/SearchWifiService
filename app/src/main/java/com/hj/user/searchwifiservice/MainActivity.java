@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -34,6 +35,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.gun0912.tedpermission.PermissionListener;
+import com.gun0912.tedpermission.TedPermission;
 import com.hj.user.searchwifiservice.adapters.SpinnerAdapter;
 import com.hj.user.searchwifiservice.models.Row;
 import com.hj.user.searchwifiservice.models.WIfiInfo;
@@ -47,6 +50,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 import static com.hj.user.searchwifiservice.R.id.map;
 import static com.hj.user.searchwifiservice.TypefaceManager.mKopubDotumLightTypeface;
 
@@ -54,7 +58,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback, LocationListener {
 
 
-    public static final int GPS_REQUEST_CODE = 1000;
+    public static final int LOCATION_SOURCE_REQUEST_CODE = 1000;
+    private static final int ACCESS_FINE_LOCATION_REQUEST_CODE = 1001;
     // LocationListener
 
     private ImageView mSearchImageview;
@@ -122,6 +127,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mMainToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(mMainToolbar);
         getSupportActionBar().setTitle("");
+
 
         // TODO 툴바 제목, 부제목 연결 및 글씨체 설정
         mTitleTextview = (TextView) mMainToolbar.findViewById(R.id.title_textview);
@@ -236,54 +242,47 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onStart() {
         mGoogleApiClient.connect();
+        super.onStart();
 //        Log.d("MainActivity", "onResume: ");
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-//        Log.d("MainActivity", "onPause: ");
+    protected void onStop() {
         if (mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
+        super.onStop();
+//        Log.d("MainActivity", "onPause: ");
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-//        Log.d("MainActivity", "onConnected: ");
-
-        mMyLastlocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-
-        if (mMyLastlocation == null) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        }
+        Log.d("MainActivity", "onConnected: ");
 
 
-        if (mMyPositionIsClicked) {
-            mGuSpinner.setSelection(0);
-            if (!gpsIsOn()) {
-                Toast.makeText(this, "gps를 켜주세요", Toast.LENGTH_SHORT).show();
-                startGps();
-            } else {
-//                Toast.makeText(this, "moveMyPosition 작동", Toast.LENGTH_SHORT).show();
-                moveMyPosition();
-            }
-        }
+
+//        if (mMyPositionIsClicked) {
+//            mGuSpinner.setSelection(0);
+//            if (!gpsIsOn()) {
+//                Toast.makeText(this, "gps를 켜주세요", Toast.LENGTH_SHORT).show();
+//                actionLocationSource();
+//            } else {
+////                Toast.makeText(this, "moveMyPosition 작동", Toast.LENGTH_SHORT).show();
+//                moveMyPosition();
+//            }
+//        }
 
 
     }
 
 
-    // TODO
     /*
       if (mMyPositionIsClicked) {
             moveMyPosition();
         }
      */
-    // TODO 갱신 안됨
     @Override
     public void onLocationChanged(Location location) {
 //        Log.d("MainActivity", "onLocationChanged: ");
@@ -296,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 //            mGuSpinner.setSelection(0);
 //            if (!gpsIsOn()) {
 //                Toast.makeText(this, "gps를 켜주세요", Toast.LENGTH_SHORT).show();
-//                startGps();
+//                actionLocationSource();
 //            } else {
 //                Toast.makeText(this, "moveMyPosition 작동", Toast.LENGTH_SHORT).show();
 //                moveMyPosition();
@@ -308,13 +307,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     public void moveMyPosition() {
         mMyPositionIsClicked = true;
-
-
-        // TODO
-
-
-
-
 
 
 //        mMyLastlocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -432,6 +424,45 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
 
+    public class StringModifier {
+        private String string;
+
+        public StringModifier(String string) {
+            this.string = string;
+        }
+
+        /**
+         * 해당 문자열에 줄바꿈을 적용한다.
+         */
+        public StringModifier newLine() {
+            string += "\n";
+            return this;
+        }
+
+        /**
+         * 해당 문자열에 텍스트를 추가한다.
+         */
+        public StringModifier addText(CharSequence addedText) {
+            string += addedText;
+            return this;
+        }
+
+        /**
+         * 해당 문자열에 trim 을 한다.
+         */
+        public StringModifier trim() {
+            string = string.trim();
+            return this;
+        }
+
+        /**
+         * 최종적으로 모든 값이 적용된 문자열을 리턴한다.
+         */
+        public String end() {
+            return string;
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -444,12 +475,53 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         switch (item.getItemId()) {
             case R.id.action_my_position:
                 mGuSpinner.setSelection(0);
-                if (!gpsIsOn()) {
-                    Toast.makeText(this, "gps를 켜주세요", Toast.LENGTH_SHORT).show();
-                    startGps();
-                } else {
-                    moveMyPosition();
-                }
+
+                permissionCheck();
+//                Toast.makeText(this, "나의위치 클릭됨", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "" + mMyLastlocation.toString(), Toast.LENGTH_SHORT).show();
+
+
+//                if (!gpsIsOn()) {
+//
+//                    PermissionListener permissionListener = new PermissionListener() {
+//                        @Override
+//                        public void onPermissionGranted() {
+//                            // actionLocationSource() 실행안됨
+//                            actionLocationSource();
+//                        }
+//
+//                        @Override
+//                        public void onPermissionDenied(ArrayList<String> deniedPermissions) {
+//                        }
+//                    };
+//
+//                    // TODO 퍼미션체크 안됨. 메시지 안나옴
+//                    new TedPermission(this).setPermissionListener(permissionListener)
+//                            .setRationaleMessage("[선택권한] 이 기능은 외부 저장소에 접근 권한이 필요합니다.")
+//                            .setDeniedMessage(new StringModifier("[선택권한] 이 기능은 위치에 대한 접근 권한이 필요합니다.")
+//                                    .newLine()
+//                                    .newLine()
+//                                    .addText("설정 메뉴에서 언제든지 권한을 변경 할 수 있습니다. [설정] - [권한] 으로 이동하셔서 권한을 허용하신후 이용하시기 바랍니다.")
+//                                    .end())
+//                            .setPermissions(
+//                                    android.Manifest.permission.ACCESS_COARSE_LOCATION,
+//                                    android.Manifest.permission.ACCESS_FINE_LOCATION
+//                            )
+//                            .check();
+//
+//
+//                } else {
+//                    moveMyPosition();
+//                }
+
+
+                // 위의 코드로 수정
+//                if (!gpsIsOn()) {
+//                    Toast.makeText(this, "gps를 켜주세요", Toast.LENGTH_SHORT).show();
+//                    actionLocationSource();
+//                } else {
+//                    moveMyPosition();
+//                }
 
                 return true;
 
@@ -463,28 +535,97 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == GPS_REQUEST_CODE) {
+        if (requestCode == LOCATION_SOURCE_REQUEST_CODE) {
             if (gpsIsOn()) {
                 moveMyPosition();
             } else {
                 Toast.makeText(this, "gps를 켜야 현재 위치를 확인할 수 있습니다", Toast.LENGTH_SHORT).show();
             }
+
         }
+
+
     }
 
     private boolean gpsIsOn() {
         // GPS 상태 확인
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            return true;
-        } else {
-            return false;
-        }
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
-    private void startGps() {
+    private void actionLocationSource() {
         Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-        startActivityForResult(intent, GPS_REQUEST_CODE);
+        startActivityForResult(intent, LOCATION_SOURCE_REQUEST_CODE);
+
+    }
+
+    private void actionAccessFineLocation() {
+        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        startActivityForResult(intent, ACCESS_FINE_LOCATION_REQUEST_CODE);
+
+    }
+
+
+
+    /*
+      if (requestCode == ACCESS_FINE_LOCATION_REQUEST_CODE) {
+            mMyLastlocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+            if (mMyLastlocation == null) {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, MainActivity.this);
+            }
+        }
+
+     */
+
+    private void permissionCheck() {
+        PermissionListener permissionListener = new PermissionListener() {
+            @Override
+            public void onPermissionGranted() {
+//                checkGpsService();
+                //locationPermissionchk = true;
+                // gps 설정이 안되어있을경우
+                if (!gpsIsOn()) {
+                    actionLocationSource();
+                } else {
+                    // 권한 승인완료시 현재위치정보 얻어오기
+//                    LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, MainActivity.this);
+
+                    mMyLastlocation = FusedLocationApi.getLastLocation(
+                            mGoogleApiClient);
+
+//                    if (mMyLastlocation != null) {
+//
+//
+//                    }
+
+                    moveMyPosition();
+//                    if (mMyLastlocation != null) {
+////                        setCurrentLocation(mLastLocation);
+//                    } else {
+//                        Log.d("MainActivity", "onPermissionGranted: null");
+//                    }
+
+
+
+                }
+
+            }
+
+            @Override
+            public void onPermissionDenied(ArrayList<String> deniedPermissions) {
+            }
+        };
+        new TedPermission(this).setPermissionListener(permissionListener)
+                .setDeniedMessage(new StringModifier("모든 권한을 허용해야 정상적인 이용이 가능합니다.")
+                        .newLine()
+                        .newLine()
+                        .addText("[설정] - [권한] 으로 이동하셔서 권한을 허용하신후 이용하시기 바랍니다.")
+                        .end())
+                .setPermissions(
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                .check();
 
     }
 
