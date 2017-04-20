@@ -589,15 +589,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     actionLocationSource();
                 } else {
                     // 권한 승인완료시 현재위치정보 얻어오기
-//                    LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, MainActivity.this);
+                    LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, MainActivity.this);
 
-                    mMyLastlocation = FusedLocationApi.getLastLocation(
-                            mGoogleApiClient);
-
-//                    if (mMyLastlocation != null) {
-//
-//
-//                    }
+                    if (mMyLastlocation != null) {
+                        mMyLastlocation = FusedLocationApi.getLastLocation(
+                                mGoogleApiClient);
+                    }
 
                     moveMyPosition();
 //                    if (mMyLastlocation != null) {
