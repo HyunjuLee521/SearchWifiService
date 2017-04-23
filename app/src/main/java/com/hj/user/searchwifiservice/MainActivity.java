@@ -614,6 +614,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             }
         };
         new TedPermission(this).setPermissionListener(permissionListener)
+                .setRationaleMessage("[선택권한] 이 기능은 위치에 접근 권한이 필요합니다.")
                 .setDeniedMessage(new StringModifier("모든 권한을 허용해야 정상적인 이용이 가능합니다.")
                         .newLine()
                         .newLine()
