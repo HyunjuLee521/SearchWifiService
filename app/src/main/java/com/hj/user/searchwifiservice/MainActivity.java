@@ -39,7 +39,7 @@ import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
 import com.hj.user.searchwifiservice.adapters.SpinnerAdapter;
 import com.hj.user.searchwifiservice.models.Row;
-import com.hj.user.searchwifiservice.models.WIfiInfo;
+import com.hj.user.searchwifiservice.models.WifiInfo;
 
 import java.util.ArrayList;
 
@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private ImageView mSearchImageview;
     private EditText mSearchEdittext;
-    private WIfiInfo mData;
+    private WifiInfo mData;
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private ArrayList<String> guName;
     private SpinnerAdapter mSpinnerAdapter;
-    private WIfiInfo mGuData;
+    private WifiInfo mGuData;
 
 
     private GoogleMap mMap;
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mTitleTextview.setText("서울시 무료 와이파이 지도");
 
 
-        // WIfiInfo 데이터 파싱하여 넣기
+        // WifiInfo 데이터 파싱하여 넣기
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(WifiInfoApi.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -364,9 +364,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mMyPositionIsClicked = false;
 //        Toast.makeText(this, "startService 에서 값 " + mMyPositionIsClicked, Toast.LENGTH_SHORT).show();
 
-        wifiInfoApi.getWifiInfo("1", "1000", gu).enqueue(new Callback<WIfiInfo>() {
+        wifiInfoApi.getWifiInfo("1", "1000", gu).enqueue(new Callback<WifiInfo>() {
             @Override
-            public void onResponse(Call<WIfiInfo> call, Response<WIfiInfo> response) {
+            public void onResponse(Call<WifiInfo> call, Response<WifiInfo> response) {
                 mGuData = response.body();
 
                 if (mGuData != null) {
@@ -378,7 +378,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             }
 
             @Override
-            public void onFailure(Call<WIfiInfo> call, Throwable t) {
+            public void onFailure(Call<WifiInfo> call, Throwable t) {
                 Toast.makeText(MainActivity.this, t.getMessage() + " ", Toast.LENGTH_SHORT).show();
             }
         });
@@ -394,7 +394,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     }
 
-    public void addWifiPositionMarker(WIfiInfo wIfiInfo) {
+    public void addWifiPositionMarker(WifiInfo wIfiInfo) {
 
         ArrayList<Row> rowArrayList = wIfiInfo.getPublicWiFiPlaceInfo().getRow();
         int size = rowArrayList.size();

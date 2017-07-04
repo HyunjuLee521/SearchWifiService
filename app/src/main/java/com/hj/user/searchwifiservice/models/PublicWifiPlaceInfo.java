@@ -6,7 +6,7 @@ import java.util.ArrayList;
  * Created by USER on 2017-03-27.
  */
 
-public class PublicWiFiPlaceInfo {
+public class PublicWifiPlaceInfo {
     private RESULT RESULT;
 
     private String list_total_count;
