@@ -15,21 +15,21 @@
     
 ## 3. UI
 1. 스피너 버튼을 누르면 서울시 25개의 구 이름을 보여준다. 원하는 구를 클릭한다.
-    ![screensh](https://github.com/HyunjuLee521/NewDiaryProject/blob/master/ui1.png)
+    ![screensh](https://github.com/HyunjuLee521/SearchWifiService/blob/master/ui1.png)
 
 1. 선택된 구의 무료 와이파이의 위치를 지도에 표시한다. 마커를 클릭하면 해당 와이파이존의 설치기관명과 장소명을 표시한다.
-    ![screensh](https://github.com/HyunjuLee521/NewDiaryProject/blob/master/ui1.png)
+    ![screensh](https://github.com/HyunjuLee521/SearchWifiService/blob/master/ui2.png)
     
 1. 상단 바 우측 버튼을 클릭하면 나의 현재 위치를 알수있다. 위치 검색을 위해 위치 접근 권한을 허용해야 한다.
-    ![screensh](https://github.com/HyunjuLee521/NewDiaryProject/blob/master/ui1.png)
+    ![screensh](https://github.com/HyunjuLee521/SearchWifiService/blob/master/ui3.png)
 
 1. 위치 접근 권한을 허용하고 gps을 실행한 후, 나의 현재 위치가 지도에 표시된다. 위치가 변경되더라도 실시간으로 지도에 반영되어 나타난다.
-    ![screensh](https://github.com/HyunjuLee521/NewDiaryProject/blob/master/ui1.png)
+    ![screensh](https://github.com/HyunjuLee521/SearchWifiService/blob/master/ui4.png)
 
 
 
 ## 4. Sutructure(Xmind)
-![screensh](https://github.com/HyunjuLee521/NewDiaryProject/blob/master/structure.png)
+![screensh](https://github.com/HyunjuLee521/SearchWifiService/blob/master/structure.png)
 
 ## 5. Features
 1. 서울시 각 구 별로 공공 와이파이 위치 검색하기(지도에 와이파이존 위치 마커로 표시하기, 설치 기관과 장소명 띄우기) 
