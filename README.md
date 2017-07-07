@@ -36,7 +36,7 @@
 1. 상단 바 우측 버튼 클릭하여 나의 현재 위치 보여주기(지도에 마커로 표시하기)
 1. 이동시 변경된 나의 위치 실시간으로 반영하여 보여주기
 
-## 6. Credits
+## 6. Library
 1. 레트로핏
     * square / retrofit2 : https://github.com/square/retrofit/tree/master/retrofit/src/main/java/retrofit2
     
